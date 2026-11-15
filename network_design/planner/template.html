@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Secure the Grid: QKD + PQC Network Planner</title>
+<style>
+:root{--bg:#eef1f8;--panel:#fff;--ink:#1d2330;--muted:#5d6676;--line:#dfe3ea;--qkd:#e07a1f;--pqc:#4c6ef5;--backup:#2f9e44;--cc:#111827;--tn:#e07a1f;--prot:#4a7c59;--bad:#c92a2a;--good:#2b8a3e}
+*{box-sizing:border-box}
+body{margin:0;font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+header{padding:14px 20px;background:#fff;border-bottom:1px solid var(--line);display:flex;gap:16px;align-items:baseline;flex-wrap:wrap}
+header h1{font-size:18px;margin:0}
+header p{margin:0;color:var(--muted)}
+.wrap{display:grid;grid-template-columns:300px 1fr 330px;gap:12px;padding:12px;min-height:calc(100vh - 60px)}
+@media (max-width:1150px){.wrap{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.panel h2{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:14px 0 8px}
+.panel h2:first-child{margin-top:0}
+select,input[type=text],input[type=number],textarea{width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;font:inherit;background:#fff}
+textarea{font:12px ui-monospace,Menlo,monospace;height:90px}
+button{font:inherit;padding:7px 10px;border-radius:6px;border:1px solid var(--line);background:#fff;cursor:pointer}
+button:hover{border-color:#aab3c2}
+button.primary{background:var(--qkd);border-color:var(--qkd);color:#fff;font-weight:600;width:100%;padding:10px}
+button.on{background:#1d2330;color:#fff;border-color:#1d2330}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.slider{margin:8px 0}
+.slider label{display:flex;justify-content:space-between;font-size:13px}
+.slider label b{font-variant-numeric:tabular-nums}
+.slider small{color:var(--muted);display:block;font-size:11.5px}
+input[type=range]{width:100%}
+.mapbox{position:relative;padding:0;overflow:hidden;align-self:start}
+#map{width:100%;height:auto;aspect-ratio:10/7;display:block;background:#fff;border-radius:10px;user-select:none}
+.legend{display:flex;gap:14px;flex-wrap:wrap;padding:8px 12px;font-size:12px;color:var(--muted);border-top:1px solid var(--line)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.sw{display:inline-block;width:18px;height:4px;border-radius:2px}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.kpi{border:1px solid var(--line);border-radius:8px;padding:8px}
+.kpi .v{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+.kpi .l{font-size:11.5px;color:var(--muted)}
+.note{font-size:12px;color:var(--muted)}
+.callout{border-left:3px solid var(--qkd);background:#fff7ef;padding:8px 10px;border-radius:4px;font-size:13px;margin:8px 0}
+.callout.bad{border-color:var(--bad);background:#fff1f1}
+.callout.good{border-color:var(--good);background:#effaf2}
+table{width:100%;border-collapse:collapse;font-size:12px}
+td,th{padding:4px 4px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600}
+code{font:11px ui-monospace,Menlo,monospace;word-break:break-all}
+.tabs{display:flex;gap:4px;margin-bottom:8px}
+.tabs button{flex:1;padding:6px 4px;font-size:12.5px}
+.hide{display:none}
+.toolbar{position:absolute;left:10px;top:10px;display:flex;gap:4px;flex-wrap:wrap;z-index:2}
+.toolbar button{font-size:12px;padding:5px 8px;background:#ffffffee}
+.toolbar button.on{background:#1d2330;color:#fff;border-color:#1d2330}
+.status{position:absolute;right:10px;top:48px;font-size:12px;background:#ffffffe6;padding:4px 8px;border-radius:6px;border:1px solid var(--line);max-width:70%}
+details summary{cursor:pointer;color:var(--muted);font-size:13px;margin:6px 0}
+.edge{cursor:pointer}
+.node{cursor:pointer}
+
+header{background:linear-gradient(110deg,#0b1a3a 0%,#1b2f6b 45%,#5b2a86 100%);border-bottom:none;color:#fff}
+header h1{font-size:19px;letter-spacing:.01em}
+header h1 .q{background:linear-gradient(90deg,#ffb347,#ff7a59);-webkit-background-clip:text;background-clip:text;color:transparent}
+header p{color:#c9d3f0}
+.badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:#ffffff1f;color:#fff;border:1px solid #ffffff33;margin-left:6px}
+input[type=range]{accent-color:#ff7a1a}
+.panel{box-shadow:0 1px 2px #0b12200d,0 6px 18px #0b122008}
+.panel h2{color:#5b2a86}
+.mapbox{background:#0b1220;border-color:#16213a}
+#map{background:radial-gradient(ellipse at 50% 40%,#13213f 0%,#0b1220 70%)}
+.legend svg{vertical-align:middle}
+.toolbar button{background:#16213aee;color:#dbe4ff;border-color:#2a3a63}
+.toolbar button:hover{border-color:#7aa2ff}
+.toolbar button.on{background:#ff7a1a;color:#fff;border-color:#ff7a1a}
+.status{background:#16213aee;color:#dbe4ff;border-color:#2a3a63}
+.legend{background:#0b1220;color:#9fb0d6;border-top:1px solid #16213a;border-radius:0 0 10px 10px}
+.legend b{color:#dbe4ff!important}
+.kpi{position:relative;overflow:hidden;border:none;background:linear-gradient(180deg,#fff,#f7f8fc);box-shadow:inset 0 0 0 1px #e6e9f2}
+.kpi:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--acc,#ff7a1a)}
+.kpi .v{color:var(--acc,#1d2330)}
+.bar{height:7px;border-radius:4px;background:#e9edf5;margin-top:6px;position:relative;overflow:hidden}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--acc,#ff7a1a);transition:width .8s cubic-bezier(.2,.8,.2,1)}
+.bar.ghost i{background:#b8c0d4}
+.mini{font-size:10.5px;color:#7a8499;display:flex;justify-content:space-between}
+.flow{animation:flow 1.2s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-24}}
+.pulse{animation:pulse 1.1s ease-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes pulse{0%{opacity:.9;r:6}100%{opacity:0;r:34}}
+.blink{animation:blink .8s steps(2) infinite}
+@keyframes blink{50%{opacity:.25}}
+.bb84{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;margin:8px 0 4px}
+.ph{border-radius:6px;padding:3px 0;text-align:center;font:600 12px ui-monospace,Menlo,monospace;background:#eef2ff;color:#334;position:relative}
+.ph small{display:block;font-size:9px;color:#8090b0;font-weight:500}
+.ph.drop{opacity:.28}
+.ph.err{background:#ffe3e3;color:#c92a2a}
+.ph.ok{background:#e6fcf5;color:#087f5b}
+.ph.eve:after{content:"👁";position:absolute;top:-9px;right:-3px;font-size:10px}
+.meter{height:16px;border-radius:8px;background:linear-gradient(90deg,#2b8a3e 0%,#2b8a3e 30%,#f59f00 40%,#e03131 100%);position:relative;margin:6px 0 2px}
+.meter .needle{position:absolute;top:-4px;width:3px;height:24px;background:#111;border-radius:2px;transition:left 1.4s cubic-bezier(.2,.8,.2,1)}
+.meter .thr{position:absolute;top:-3px;bottom:-3px;width:0;border-left:2px dashed #fff}
+.alarm{display:inline-block;background:#e03131;color:#fff;font-weight:800;padding:2px 8px;border-radius:6px;letter-spacing:.06em}
+.silent{display:inline-block;background:#495057;color:#fff;font-weight:800;padding:2px 8px;border-radius:6px;letter-spacing:.06em}
+
+header{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:12px 20px;flex-wrap:nowrap}
+.htext{min-width:0}
+.scene{flex:0 0 auto;max-width:42vw;height:auto}
+@media (max-width:900px){.scene{display:none}}
+.steps{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.steps span{font-size:12px;background:#ffffff1a;border:1px solid #ffffff2e;border-radius:999px;padding:3px 10px;color:#fff}
+.ic{vertical-align:-3px}
+.panel h2{display:flex;align-items:center;gap:7px}
+.panel h2 .ic{color:#ff7a1a}
+.tiles{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.tile{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px;border-radius:10px;border:1.5px solid #e3e7f1;background:#fff;cursor:pointer;font-size:10.5px;color:#4a5578;text-align:center;line-height:1.15;transition:all .15s}
+.tile .ic{width:24px;height:24px}
+.tile:hover{border-color:#ffb37a;transform:translateY(-1px)}
+.tile.on{background:linear-gradient(160deg,#fff4ea,#ffe3cc);border-color:#ff7a1a;color:#c2410c;box-shadow:0 3px 10px #ff7a1a33}
+.tile[data-s=power] .ic{color:#f59f00}.tile[data-s=water] .ic{color:#1c7ed6}.tile[data-s=pipeline] .ic{color:#6741d9}.tile[data-s=health] .ic{color:#e03131}.tile[data-s=finance] .ic{color:#2b8a3e}
+.slider label span.lab{display:inline-flex;align-items:center;gap:6px}
+.slider label .ic{color:#5b2a86}
+.viz{display:flex;gap:2.5px;align-items:center;margin:3px 0 2px;min-height:14px;flex-wrap:wrap}
+.pip{width:7px;height:9px;border-radius:2px;background:#e6e9f2}
+.pip.on{background:linear-gradient(135deg,#ffb347,#ff6a00);box-shadow:0 0 4px #ff7a1a88}
+.lockpip{color:#ff7a1a}.lockpip.off{color:#d5dae6}
+.hopdot{width:9px;height:9px;border-radius:50%;background:#2fb344}
+.hopdot.cc{background:#ffd43b;box-shadow:0 0 0 2px #fff3bf}
+.hopline{width:12px;height:3px;background:linear-gradient(90deg,#ffb347,#ff6a00);border-radius:2px}
+.beam{height:9px;flex:1;border-radius:5px}
+.scale{display:flex;flex:1;height:10px;border-radius:5px;overflow:hidden}
+.scale i{display:block;height:100%}
+.kpi .kicon{position:absolute;right:8px;top:8px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--acc) 14%,#fff);color:var(--acc)}
+.kpi .v{padding-right:30px}
+.donut{display:flex;align-items:center;gap:8px;margin-top:6px}
+.idle{display:flex;gap:10px;align-items:center}
+.idle svg{flex:0 0 auto}
+button.primary{display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(90deg,#ff8a3d,#ff5f1f);box-shadow:0 4px 14px #ff7a1a55}
+button.primary:active{transform:translateY(1px)}
+.devrow{display:flex;gap:8px;margin:6px 0}
+.dev{flex:1;border-radius:10px;padding:8px;background:linear-gradient(160deg,#f3f0ff,#fff);border:1px solid #e5dbff;text-align:center;font-size:11px;color:#5b2a86}
+.dev .ic{width:22px;height:22px;display:block;margin:0 auto 2px}
+</style>
+</head>
+<body>
+<header>
+  <div class="htext"><h1>Secure the Grid · <span class="q">QKD + PQC</span> Network Planner<span class="badge">runs on qBraid</span></h1>
+  <p>Post-quantum cryptography on every link, quantum key distribution only where it pays off. Load a grid, change the assumptions, and attack the result.</p>
+  <div class="steps"><span>①&nbsp;Pick a sector</span><span>②&nbsp;Load or draw a network</span><span>③&nbsp;Tune assumptions</span><span>④&nbsp;Optimize &amp; attack</span></div></div>
+  <svg class="scene" viewBox="0 0 420 110" width="420" height="110" aria-hidden="true">
+  <defs><linearGradient id="hill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#2a3f7a"/><stop offset="1" stop-color="#16244d"/></linearGradient>
+  <filter id="hg"><feGaussianBlur stdDeviation="2"/></filter></defs>
+  <g fill="#fff" opacity=".7"><circle cx="30" cy="14" r="1"/><circle cx="90" cy="8" r="1.2"/><circle cx="160" cy="18" r="1"/><circle cx="250" cy="10" r="1.3"/><circle cx="330" cy="16" r="1"/><circle cx="395" cy="7" r="1.1"/></g>
+  <path d="M0 92 Q60 70 120 86 T240 82 T420 80 V110 H0Z" fill="url(#hill)"/>
+  <!-- power plant -->
+  <g transform="translate(18,52)"><rect x="0" y="22" width="44" height="22" fill="#3b4f8f"/><rect x="6" y="2" width="8" height="22" fill="#4c63a8"/><rect x="20" y="8" width="8" height="16" fill="#4c63a8"/>
+    <circle cx="10" cy="-3" r="5" fill="#c9d3f0" opacity=".5"><animate attributeName="cy" values="-2;-14" dur="3s" repeatCount="indefinite"/><animate attributeName="opacity" values=".6;0" dur="3s" repeatCount="indefinite"/></circle>
+    <circle cx="24" cy="3" r="4" fill="#c9d3f0" opacity=".5"><animate attributeName="cy" values="3;-10" dur="3.6s" repeatCount="indefinite"/><animate attributeName="opacity" values=".6;0" dur="3.6s" repeatCount="indefinite"/></circle>
+    <rect x="34" y="28" width="6" height="6" fill="#ffd43b"/></g>
+  <!-- towers -->
+  <g stroke="#9fb0e0" stroke-width="1.4" fill="none">
+    <path id="wire" d="M62 62 Q100 74 138 58 Q176 72 214 56 Q252 70 290 58"/>
+    <g transform="translate(138,58)"><path d="M0 0 L-7 30 M0 0 L7 30 M-9 6 H9 M-11 12 H11 M-5 20 L5 20"/></g>
+    <g transform="translate(214,56)"><path d="M0 0 L-7 30 M0 0 L7 30 M-9 6 H9 M-11 12 H11 M-5 20 L5 20"/></g>
+  </g>
+  <circle r="3.5" fill="#ffb347" filter="url(#hg)"><animateMotion dur="3.2s" repeatCount="indefinite"><mpath href="#wire"/></animateMotion></circle>
+  <circle r="2" fill="#fff"><animateMotion dur="3.2s" repeatCount="indefinite"><mpath href="#wire"/></animateMotion></circle>
+  <!-- substation -->
+  <g transform="translate(286,58)"><rect x="0" y="12" width="30" height="20" rx="2" fill="#2f9e44"/><path d="M15 15 L9 24 H14 L12 31 L20 21 H15 L17 15Z" fill="#fff"/><path d="M-2 12 H32" stroke="#d3f9d8" stroke-width="1.2" stroke-dasharray="2 2"/></g>
+  <!-- city -->
+  <g transform="translate(326,34)" fill="#31458a"><rect x="0" y="26" width="16" height="34"/><rect x="18" y="10" width="20" height="50"/><rect x="40" y="30" width="14" height="30"/><rect x="56" y="18" width="18" height="42"/><rect x="76" y="34" width="14" height="26"/>
+    <g fill="#ffe066"><rect x="22" y="16" width="4" height="4"/><rect x="30" y="24" width="4" height="4"/><rect x="60" y="24" width="4" height="4"/><rect x="66" y="34" width="4" height="4"/><rect x="4" y="32" width="4" height="4"/><rect x="44" y="38" width="4" height="4"/></g></g>
+  <!-- shield -->
+  <g transform="translate(372,2)"><path d="M14 2l11 5v8c0 8-5.5 13-11 15-5.5-2-11-7-11-15V7z" fill="#ff7a1a" stroke="#ffe8cc" stroke-width="1.5"/><path d="M9 16l3.5 3.5L19 13" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round"/></g>
+</svg>
+</header>
+<div class="wrap">
+<!-- LEFT: inputs -->
+<div class="panel" id="left">
+  <h2>0 · Sector</h2>
+  <select id="sectorSel"></select>
+  <p class="note" id="sectorNote"></p>
+  <h2>1 · Network</h2>
+  <div class="tabs"><button data-tab="preset" class="on">Presets</button><button data-tab="build">Build / image</button><button data-tab="json">Import</button></div>
+  <div id="tab-preset">
+    <select id="presetSel"></select>
+    <p class="note" id="presetNote"></p>
+  </div>
+  <div id="tab-build" class="hide">
+    <div class="row"><button id="newBlank">New blank grid</button><label class="note" style="display:flex;align-items:center;gap:6px"><input type="file" id="imgFile" accept="image/*" style="width:150px">trace an image</label></div>
+    <div class="slider"><label>Image opacity <b id="opV">50%</b></label><input type="range" id="imgOp" min="0" max="100" value="50"></div>
+    <div class="slider"><label>Map scale <b id="scaleV">5 km / 100 px</b></label><input type="range" id="scale" min="1" max="60" value="5"><small>Sets the length of new links you draw. You can edit any link's km below.</small></div>
+    <details id="aiBox"><summary><b>Read a grid image with qBraid AI</b></summary>
+      <p class="note">Uses qBraid's AI Gateway (vision model, billed to your qBraid AI allowance). Your key stays in this page's memory and is sent only to api-v2.qbraid.com.</p>
+      <input type="password" id="qbKey" placeholder="qBraid API key">
+      <div class="row"><button id="qbConnect">Load models</button><select id="qbModel" style="flex:1"></select></div>
+      <div class="row"><button id="qbRead" class="on">Read uploaded image</button></div>
+      <p class="note" id="qbMsg"></p>
+    </details>
+    <p class="note">Use the map toolbar: <b>+ Substation</b> (click empty space), <b>+ Link</b> (click two substations), <b>Control center</b> (click to set main/backup), <b>Delete</b>, or <b>Move</b>.</p>
+    <div id="editBox" class="note"></div>
+  </div>
+  <div id="tab-json" class="hide">
+    <p class="note">Paste a grid as JSON: <code>{"nodes":[{"id":"A","mw":40,"kv":115}],"edges":[{"a":"A","b":"B","km":6.5}],"cc":["A","B"]}</code>. Positions (x, y) are optional.</p>
+    <textarea id="jsonIn" placeholder='{"nodes":[...],"edges":[...]}'></textarea>
+    <div class="row"><button id="jsonLoad">Load JSON</button><button id="jsonExport">Copy current grid</button></div>
+    <details><summary>Turn a grid image into JSON with AI (qBraid Lab agent)</summary>
+      <p class="note">Open the Claude or Codex agent in qBraid Lab, attach the image, and paste this prompt:</p>
+      <textarea id="aiPrompt" readonly>Read this power-grid diagram. List every substation and every line between substations as JSON with exactly this shape:
+{"nodes":[{"id":"<name>","mw":<load MW, or 20 if unknown>,"kv":<voltage kV, or 115 if unknown>,"x":<pixel x>,"y":<pixel y>}],
+ "edges":[{"a":"<id>","b":"<id>","km":<length in km if shown, else estimate from the scale bar>}],
+ "cc":["<main control center id>","<backup control center id>"]}
+Use the substation's position in the image for x and y. Output only the JSON.</textarea>
+    </details>
+  </div>
+
+  <h2>2 · Assumptions</h2>
+  <div class="slider"><label>QKD link budget <b id="KV"></b></label><input type="range" id="K" min="0" max="24" value="8"><small>How many links get QKD hardware.</small></div>
+  <div class="slider"><label>Trusted nodes allowed <b id="TV"></b></label><input type="range" id="T" min="0" max="12" value="4"><small>Relay sites where keys are decrypted and re-encrypted.</small></div>
+  <div class="slider"><label>Longest QKD chain <b id="HV"></b></label><input type="range" id="H" min="1" max="4" value="3"><small>Hops to a control center (EPB tested 3).</small></div>
+  <div class="slider"><label>Fiber loss <b id="dbV"></b></label><input type="range" id="db" min="15" max="60" value="35"><small>dB per km (EPB measured 0.35).</small></div>
+  <div class="slider"><label>QKD loss limit <b id="lossV"></b></label><input type="range" id="loss" min="4" max="20" value="10"><small>Max loss one QKD link tolerates.</small></div>
+  <div class="slider"><label>Weight on tap detection <b id="muV"></b></label><input type="range" id="mu" min="0" max="100" value="25"><small>0 = only keep keys secret; higher = also watch the busiest fiber.</small></div>
+  <button class="primary" id="run">Optimize network</button>
+  <p class="note" id="solveNote"></p>
+</div>
+
+<!-- CENTER: map -->
+<div class="panel mapbox">
+  <div class="toolbar" id="toolbar">
+    <button data-mode="tap" class="on" title="Click a link to tap it">Tap a link</button>
+    <button data-mode="move">Move</button>
+    <button data-mode="node" id="addNodeBtn">+ Substation</button>
+    <button data-mode="link">+ Link</button>
+    <button data-mode="cc" id="ccBtn">Control center</button>
+    <button data-mode="del">Delete</button>
+    <button id="randTap" title="An attacker taps a random link, weighted by length">Random attack</button>
+  </div>
+  <svg id="map" viewBox="0 0 1000 700"></svg>
+  <div class="status" id="status">Load a grid and press <b>Optimize network</b>.</div>
+  <div class="legend">
+    <span><i class="sw" style="background:linear-gradient(90deg,#ffb347,#ff6a00);height:6px;box-shadow:0 0 6px #ff7a1a"></i>QKD + PQC (photons flowing)</span>
+    <span><i class="sw" style="background:#5b8cff"></i>PQC only (width = traffic)</span>
+    <span><i class="sw" style="background:repeating-linear-gradient(90deg,#46598a 0 4px,transparent 4px 7px)"></i>Too long for QKD</span>
+    <span><i class="sw" style="background:repeating-linear-gradient(90deg,#51cf66 0 5px,transparent 5px 8px)"></i>New backup route</span>
+    <span><svg width="16" height="16"><rect width="16" height="16" rx="4" fill="#ffe066"/><use href="#ic-hub" x="1" y="1" width="14" height="14"/></svg> <b id="lgCC">control center</b></span>
+    <span><svg width="16" height="16"><rect width="16" height="16" rx="4" fill="#ff7a1a"/><use href="#ic-lock" x="2" y="2" width="12" height="12"/></svg> <b>trusted node</b></span>
+    <span><svg width="16" height="16"><circle cx="8" cy="8" r="8" fill="#2fb344"/><use id="lgIcon" href="#ic-power" x="2" y="2" width="12" height="12"/></svg> <b>QKD every hop</b></span>
+  </div>
+</div>
+
+<!-- RIGHT: results -->
+<div class="panel" id="right">
+  <h2>3 · Results</h2>
+  <div class="kpis" id="kpis"></div>
+  <div id="verdict"></div>
+  <h2>Attack test</h2>
+  <div id="attackOut" class="note">Click any link on the map to tap it, or press <b>Random attack</b>.</div>
+  <h2>Run on qBraid</h2>
+  <p class="note">Export this design and run <code>3h_design_on_qbraid.ipynb</code> in qBraid Lab: it runs BB84 on every QKD link of the design in one circuit on qBraid's GPU simulator.</p>
+  <div class="row"><button id="exportDesign">Download design JSON</button></div>
+  <details open><summary>Measured on qBraid (CHA 3–CHA 24 link)</summary>
+    <table id="evidence"></table>
+  </details>
+  <details><summary>How the optimizer works</summary>
+    <p class="note">PQC (ML-KEM / ML-DSA) protects every link. A substation counts as QKD-protected only if every hop to a control center has QKD, with at most the chosen number of trusted relays. Score = load protected (MW × route km) + weight × traffic watched on QKD fiber. The page runs greedy path selection plus swap local search with restarts. For the presets at default settings it is checked against the exact integer program (SciPy HiGHS) from the notebooks.</p>
+    <p class="note">Attack tests: a tap is caught only on a QKD link; trusted-node loss exposes keys relayed through it; one cut fiber can isolate substations unless a backup route exists.</p>
+  </details>
+</div>
+</div>
+
+<script>
+const PRESETS = /*PRESETS*/[];
+const EVIDENCE = /*EVIDENCE*/[];
+
+const IC = {
+ shield:'<path d="M12 3l7 3v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6z"/><path d="M9 12l2 2 4-4"/>',
+ link:'<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.2 1.2"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.2-1.2"/>',
+ lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+ chain:'<circle cx="5" cy="12" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="19" cy="12" r="2.2"/><path d="M7.2 12h2.6M14.2 12h2.6"/>',
+ fiber:'<path d="M3 12c3-5 6 5 9 0s6 5 9 0"/><circle cx="3" cy="12" r="1.4"/><circle cx="21" cy="12" r="1.4"/>',
+ gauge:'<path d="M4 17a8 8 0 1 1 16 0"/><path d="M12 17l4-5"/><circle cx="12" cy="17" r="1.3"/>',
+ eye:'<path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+ spy:'<path d="M4 10h16"/><path d="M7 10l1.5-5h7L17 10"/><circle cx="8" cy="15" r="2.6"/><circle cx="16" cy="15" r="2.6"/><path d="M10.6 15h2.8"/>',
+ radar:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="M12 12l6-6"/>',
+ scissors:'<circle cx="6" cy="7" r="2.5"/><circle cx="6" cy="17" r="2.5"/><path d="M8.2 8.3L20 18M8.2 15.7L20 6"/>',
+ bolt:'<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
+ building:'<rect x="5" y="4" width="14" height="17" rx="1"/><path d="M9 8h2M13 8h2M9 12h2M13 12h2M11 21v-4h2v4"/>',
+ chip:'<rect x="7" y="7" width="10" height="10" rx="1.5"/><path d="M9 3v4M15 3v4M9 17v4M15 17v4M3 9h4M3 15h4M17 9h4M17 15h4"/>',
+ atom:'<circle cx="12" cy="12" r="1.6"/><ellipse cx="12" cy="12" rx="9" ry="3.6"/><ellipse cx="12" cy="12" rx="9" ry="3.6" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="9" ry="3.6" transform="rotate(120 12 12)"/>',
+ sliders:'<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
+ map:'<path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/>',
+ chart:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+ download:'<path d="M12 3v12M7 10l5 5 5-5M4 21h16"/>',
+ play:'<path d="M7 4l13 8-13 8z"/>',
+ gpu:'<rect x="2" y="7" width="20" height="11" rx="2"/><circle cx="9" cy="12.5" r="2.6"/><circle cx="16" cy="12.5" r="2.6"/><path d="M5 18v2M19 18v2"/>',
+ power:'<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
+ water:'<path d="M12 3c4 5 6.5 8 6.5 11a6.5 6.5 0 0 1-13 0C5.5 11 8 8 12 3z"/>',
+ pipeline:'<circle cx="12" cy="12" r="6"/><path d="M12 6v12M6 12h12M2 12h4M18 12h4"/>',
+ health:'<path d="M9.5 3h5v6.5H21v5h-6.5V21h-5v-6.5H3v-5h6.5z"/>',
+ finance:'<path d="M3 9l9-6 9 6z"/><path d="M5 10v8M10 10v8M14 10v8M19 10v8M3 21h18"/>',
+ sparkle:'<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"/>'
+};
+const ico = (k, size=18, cls="") => `<svg class="ic ${cls}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${IC[k]||""}</svg>`;
+
+// ---------------------------------------------------------------- sectors (same math, different labels)
+const SECTORS = {
+  power:   {name:"Electric utility", unit:"MW", what:"load", site:"substation", hub:"control center", traffic:"control traffic", note:"Value per site = load in MW (stands in for NERC CIP-002 impact).",
+            p:{K:8,T:4,H:3,db:35,loss:10,mu:25},
+            why:{K:"8 links: the budget used in the writeup", T:"4 relays: substations are fenced, staffed sites", H:"3 hops: the route EPB tested", db:"0.35 dB/km: EPB's measured aerial fiber on poles", mu:"0.25: keys secret first, but grid commands can be tapped"}},
+  water:   {name:"Water / wastewater utility", unit:"k people", what:"people served", site:"pump or treatment site", hub:"SCADA control center", traffic:"SCADA traffic", note:"Value per site = thousands of people served. Same fiber physics, same attacks.",
+            p:{K:6,T:3,H:3,db:25,loss:10,mu:50},
+            why:{K:"6 links: smaller utilities, smaller budgets", T:"3 relays: many pump sites are unstaffed", H:"3 hops: similar city-scale layout", db:"0.25 dB/km: fiber buried with pipes, closer to the 0.2 dB/km cable spec", mu:"0.50: tampering with treatment commands is the main fear, so catching taps matters more"}},
+  pipeline:{name:"Oil & gas pipeline", unit:"k bbl/day", what:"throughput", site:"compressor / valve station", hub:"pipeline control room", traffic:"control traffic", note:"Value per site = throughput it controls (thousand barrels/day).",
+            p:{K:8,T:4,H:4,db:22,loss:10,mu:60},
+            why:{K:"8 links: similar scale to a utility", T:"4 relays: stations along the line must relay", H:"4 hops: long, linear routes need longer chains", db:"0.22 dB/km: buried in the right-of-way, near the 0.2 dB/km spec", mu:"0.60: remote right-of-way is easy to reach, so tap detection weighs heavily"}},
+  health:  {name:"Hospital network", unit:"beds", what:"patients (beds)", site:"hospital or clinic", hub:"data center", traffic:"patient-record traffic", note:"Value per site = beds served; records must stay secret for decades.",
+            p:{K:6,T:2,H:2,db:30,loss:10,mu:10},
+            why:{K:"6 links: a regional health system", T:"2 relays: keys may only sit inside secured facilities", H:"2 hops: campuses are close together", db:"0.30 dB/km: leased metro fiber with many splices", mu:"0.10: records must stay secret for decades, so secrecy dominates"}},
+  finance: {name:"Bank / exchange", unit:"$M/day", what:"transactions", site:"branch or data center", hub:"primary data center", traffic:"transaction traffic", note:"Value per site = daily transaction value; long-lived secrets make harvest-now-decrypt-later real.",
+            p:{K:12,T:2,H:2,db:25,loss:10,mu:15},
+            why:{K:"12 links: larger security budgets", T:"2 relays: strict key custody, few trusted sites", H:"2 hops: data centers in one metro", db:"0.25 dB/km: carrier-grade dark fiber", mu:"0.15: secrecy first, plus some tap detection on busy links"}}};
+let SEC = SECTORS.power;
+// ---------------------------------------------------------------- state
+const S = {nodes:new Map(), edges:[], cc:[], design:null, mode:"tap", bg:null, bgOp:0.5, sel:null, linkStart:null, presetKey:null, tapped:null};
+const $ = id => document.getElementById(id);
+const P = () => ({K:+$("K").value, T:+$("T").value, H:+$("H").value, db:+$("db").value/100, loss:+$("loss").value, mu:+$("mu").value/100});
+const ek = (a,b) => a < b ? a + "\u0001" + b : b + "\u0001" + a;
+const fmt = (x,d=0) => x.toLocaleString(undefined,{maximumFractionDigits:d,minimumFractionDigits:d});
+
+// ---------------------------------------------------------------- graph helpers
+function adj(){ const A=new Map(); for(const n of S.nodes.keys()) A.set(n,[]); S.edges.forEach((e,i)=>{ if(A.has(e.a)&&A.has(e.b)){A.get(e.a).push([e.b,e.km,i]);A.get(e.b).push([e.a,e.km,i]);} }); return A; }
+function dijkstra(A, src){ const d=new Map([[src,0]]), prev=new Map(), done=new Set(); const Q=[[0,src]];
+  while(Q.length){ Q.sort((x,y)=>x[0]-y[0]); const [du,u]=Q.shift(); if(done.has(u)) continue; done.add(u);
+    for(const [v,w,i] of A.get(u)){ const nd=du+w; if(!d.has(v)||nd<d.get(v)-1e-12){ d.set(v,nd); prev.set(v,[u,i]); Q.push([nd,v]); } } }
+  return {d,prev}; }
+function pathEdges(prev, s){ const E=[]; let u=s; while(prev.has(u)){ const [p,i]=prev.get(u); E.push(i); u=p; } return E; }
+function autoCC(){ const A=adj(); const ids=[...S.nodes.keys()]; if(!ids.length) return [];
+  let best=null; for(const s of ids){ const {d}=dijkstra(A,s); if(d.size<ids.length*0.6) continue; let sum=0; for(const v of d.values()) sum+=v;
+    const sc=(S.nodes.get(s).kv||0)*1e6 - sum; if(!best||sc>best[0]) best=[sc,s]; }
+  const c1=best?best[1]:ids[0]; const H=P().H;
+  // backup: closest-to-center node within H hops (BFS) other than c1
+  const hop=new Map([[c1,0]]), q=[c1]; while(q.length){const u=q.shift(); for(const [v] of A.get(u)) if(!hop.has(v)){hop.set(v,hop.get(u)+1); if(hop.get(v)<=H) q.push(v);} }
+  let b2=null; for(const [s,h] of hop){ if(s===c1||h>H) continue; const {d}=dijkstra(A,s); let sum=0; for(const v of d.values()) sum+=v; if(!b2||sum<b2[0]) b2=[sum,s]; }
+  return b2? [c1,b2[1]] : [c1]; }
+
+// ---------------------------------------------------------------- model (mirrors network_design/v11.py)
+function buildModel(p){
+  const A=adj(); const cc=S.cc.filter(c=>S.nodes.has(c)); if(cc.length===0) return null;
+  const feasible=new Set(); S.edges.forEach((e,i)=>{ if(e.km*p.db<=p.loss+1e-9) feasible.add(i); });
+  const dist=new Map(); for(const c of cc){ const {d}=dijkstra(A,c); for(const [s,v] of d) dist.set(s, Math.min(dist.get(s)??Infinity, v)); }
+  const value=new Map(); for(const [s,n] of S.nodes) if(!cc.includes(s) && dist.has(s)) value.set(s, n.mw*dist.get(s));
+  // feasible adjacency
+  const F=new Map(); for(const n of S.nodes.keys()) F.set(n,[]); for(const i of feasible){ const e=S.edges[i]; F.get(e.a).push([e.b,i]); F.get(e.b).push([e.a,i]); }
+  const paths=new Map(); const cc2=cc[1];
+  const targets=[...value.keys()]; if(cc2) targets.push(cc2);
+  // DFS from each control center up to H hops
+  const reach=new Map(); // target -> list of {E:[edge idx], R:[relays]}
+  for(const c of cc){ const stack=[[c,[c],[]]]; let count=0;
+    while(stack.length && count<200000){ const [u,nodes,E]=stack.pop(); count++;
+      if(E.length>0){ const t=u; if((!cc.includes(t) && value.has(t)) || (t===cc2 && c===cc[0])){ if(!reach.has(t)) reach.set(t,[]); const L=reach.get(t); if(L.length<80) L.push({E:E.slice(), R:nodes.slice(1,-1).filter(n=>!cc.includes(n))}); } }
+      if(E.length>=p.H) continue;
+      for(const [v,i] of F.get(u)){ if(nodes.includes(v)) continue; stack.push([v,[...nodes,v],[...E,i]]); } } }
+  for(const t of targets) if(reach.has(t)) paths.set(t, reach.get(t));
+  const ccReach = !!(cc2 && paths.has(cc2));
+  let maxValue=0; for(const [s,v] of value) if(paths.has(s)) maxValue+=v;
+  // traffic per feasible edge (PQC baseline: shortest route from nearest control center)
+  const traffic=new Float64Array(S.edges.length); const routes0=baseRoutes(A,cc);
+  for(const [s,E] of routes0) if(!cc.includes(s)) for(const i of E) traffic[i]+=S.nodes.get(s).mw;   // objective: substations only (as in v11.traffic)
+  const through0=new Float64Array(S.edges.length); for(const [s,E] of routes0) for(const i of E) through0[i]+=S.nodes.get(s).mw;   // attacks: incl. backup control center
+  let tot=0; for(const i of feasible) tot+=traffic[i]*S.edges[i].km; const scale= tot>0 ? maxValue/tot : 0;
+  return {A,cc,feasible,value,paths,ccReach,maxValue,traffic,through0,scale,routes0,p};
+}
+function baseRoutes(A,cc){ const R=new Map(); const runs=cc.map(c=>dijkstra(A,c));
+  for(const s of S.nodes.keys()){ if(cc.includes(s) && s!==cc[1]) continue; let best=null;
+    runs.forEach((r,k)=>{ if(cc[k]===s) return; if(r.d.has(s) && (!best || r.d.get(s)<best[0])) best=[r.d.get(s), pathEdges(r.prev,s)]; });
+    if(best) R.set(s,best[1]); }
+  return R; }
+function evaluate(M, Y, T){ // Y: Set of edge idx
+  const used=new Set(), prot=[], chosen=new Map(); let val=0;
+  const order=(M.ccReach?[M.cc[1]]:[]).concat([...M.paths.keys()].filter(s=>s!==M.cc[1]).sort((a,b)=>M.value.get(b)-M.value.get(a)));
+  for(const s of order){ let best=null;
+    for(const pth of M.paths.get(s)){ if(!pth.E.every(i=>Y.has(i))) continue; const nw=pth.R.filter(n=>!used.has(n));
+      if(used.size+nw.length<=T && (!best || nw.length<best.nw.length)) best={nw,pth}; }
+    if(best){ best.nw.forEach(n=>used.add(n)); prot.push(s); chosen.set(s,best.pth); val+=M.value.get(s)||0; } }
+  const ccOK = !M.ccReach || prot.includes(M.cc[1]);
+  return {val: ccOK? val : -1, used, prot, chosen, ccOK}; }
+function objective(M,Y,T){ const ev=evaluate(M,Y,T); if(ev.val<0) return {...ev, obj:-1e18+ev.val};
+  let det=0; for(const i of Y) det+=M.traffic[i]*S.edges[i].km; return {...ev, obj: ev.val + M.p.mu*M.scale*det}; }
+
+function solve(M){
+  const {K,T}=M.p; const feas=[...M.feasible]; const t0=performance.now();
+  const greedy=(start)=>{ let Y=new Set(start); let cur=objective(M,Y,T).obj;
+    for(let it=0; it<200 && Y.size<K; it++){ let best=null;
+      const cands=[]; for(const [s,L] of M.paths) for(const pth of L){ const nw=pth.E.filter(i=>!Y.has(i)); if(nw.length && Y.size+nw.length<=K) cands.push(nw); }
+      for(const i of feas) if(!Y.has(i)) cands.push([i]);
+      for(const nw of cands){ const Y2=new Set([...Y,...nw]); const o=objective(M,Y2,T).obj; const g=(o-cur)/nw.length; if(o>cur+1e-9 && (!best||g>best[0])) best=[g,Y2,o]; }
+      if(!best) break; Y=best[1]; cur=best[2]; }
+    return Y; };
+  const local=(Y)=>{ let cur=objective(M,Y,T).obj; let improved=true, rounds=0;
+    while(improved && rounds<20){ improved=false; rounds++;
+      for(const out of [...Y]){ for(const inn of feas){ if(Y.has(inn)) continue; const Y2=new Set(Y); Y2.delete(out); Y2.add(inn); const o=objective(M,Y2,T).obj; if(o>cur+1e-9){ Y=Y2; cur=o; improved=true; break; } } if(improved) break; }
+      if(!improved && Y.size<K){ for(const inn of feas){ if(Y.has(inn)) continue; const Y2=new Set([...Y,inn]); const o=objective(M,Y2,T).obj; if(o>cur+1e-9){ Y=Y2; cur=o; improved=true; break; } } } }
+    return Y; };
+  // start: cheapest control-center chain that fits
+  let start=[]; if(M.ccReach){ const L=[...M.paths.get(M.cc[1])].filter(p=>p.E.length<=K && p.R.length<=T).sort((a,b)=>a.E.length-b.E.length || a.R.length-b.R.length); if(L.length) start=L[0].E; }
+  // several starting points: control-center chain, busiest fiber first, empty
+  const busy=[...feas].sort((a,b)=>M.traffic[b]*S.edges[b].km-M.traffic[a]*S.edges[a].km).slice(0,Math.max(1,Math.floor(K/2)));
+  let best=null, bestO=-Infinity; const consider=Y=>{ const o=objective(M,Y,T).obj; if(o>bestO+1e-9){ best=Y; bestO=o; } };
+  for(const st of [start, [...new Set([...start,...busy])].slice(0,K), []]) consider(local(greedy(st)));
+  let seed=7; const rnd=()=>{ seed=(seed*16807)%2147483647; return seed/2147483647; };
+  const budgetMs = 400;
+  for(let r=0; r<60 && performance.now()-t0<budgetMs; r++){ const Y=[...best]; const drop=1+Math.floor(rnd()*Math.min(4,Y.length||1));
+    for(let k=0;k<drop && Y.length;k++) Y.splice(Math.floor(rnd()*Y.length),1);
+    if(rnd()<0.5){ const add=feas[Math.floor(rnd()*feas.length)]; if(!Y.includes(add) && Y.length<K) Y.push(add); }
+    consider(local(greedy(Y))); }
+  return {Y:best, ms:performance.now()-t0}; }
+
+// ---------------------------------------------------------------- attacks and resilience
+function analyze(M, Y){
+  const T=M.p.T; const ev=evaluate(M,Y,T);
+  // routes: QKD path if protected, else shortest route
+  const R=new Map(); for(const [s,E] of M.routes0) R.set(s,{E, q:false, R:[]});
+  for(const [s,pth] of ev.chosen) R.set(s,{E:pth.E, q:true, R:pth.R});
+  const through=new Float64Array(S.edges.length); for(const [s,r] of R) for(const i of r.E) through[i]+=S.nodes.get(s).mw;
+  let worstPQC=0, worstPQCe=-1; const thr0=M.through0; for(let i=0;i<S.edges.length;i++) if(thr0[i]>worstPQC){worstPQC=thr0[i]; worstPQCe=i;}
+  let worst=0, worstE=-1; for(let i=0;i<S.edges.length;i++){ if(Y.has(i)) continue; if(through[i]>worst){worst=through[i]; worstE=i;} }
+  let kmAll=0, kmQ=0; S.edges.forEach((e,i)=>{ kmAll+=e.km; if(Y.has(i)) kmQ+=e.km; });
+  let mwProt=0; for(const s of ev.prot) mwProt+=S.nodes.get(s).mw;
+  let mwAll=0; for(const n of S.nodes.values()) mwAll+=n.mw;
+  let worstTN=0, worstTNn=null; for(const n of ev.used){ let m=0; for(const [s,r] of R) if(r.q && r.R.includes(n)) m+=S.nodes.get(s).mw; if(m>worstTN){worstTN=m; worstTNn=n;} }
+  const cut=cutAnalysis(M.cc);
+  return {ev, R, through, worst, worstE, worstPQC, worstPQCe, tapShare: kmAll? kmQ/kmAll : 0, mwProt, mwAll, worstTN, worstTNn, cut}; }
+function bridges(nodes, E){ // Tarjan on multigraph by edge index
+  const A=new Map(); nodes.forEach(n=>A.set(n,[])); E.forEach((e,i)=>{ A.get(e[0]).push([e[1],i]); A.get(e[1]).push([e[0],i]); });
+  const tin=new Map(), low=new Map(); let t=0; const out=[];
+  for(const r of nodes){ if(tin.has(r)) continue; const st=[[r,-1,0]]; tin.set(r,t); low.set(r,t); t++;
+    while(st.length){ const top=st[st.length-1]; const [u,pe]=top; const L=A.get(u);
+      if(top[2]<L.length){ const [v,i]=L[top[2]++]; if(i===pe) continue;
+        if(tin.has(v)) low.set(u,Math.min(low.get(u),tin.get(v))); else { tin.set(v,t); low.set(v,t); t++; st.push([v,i,0]); } }
+      else { st.pop(); if(st.length){ const p=st[st.length-1][0]; low.set(p,Math.min(low.get(p),low.get(u))); if(low.get(u)>tin.get(p)) out.push(pe); } } } }
+  return out; }
+function cutAnalysis(cc){
+  const ROOT = cc.length>1 ? "_CC_" : cc[0];
+  const nodes=[...S.nodes.keys()].concat(cc.length>1?["_CC_"]:[]); const E=S.edges.filter(e=>S.nodes.has(e.a)&&S.nodes.has(e.b)).map(e=>[e.a,e.b,e.km]); if(cc.length>1) cc.forEach(c=>E.push([c,"_CC_",0]));
+  const worstCut=(E)=>{ const br=bridges(nodes,E); let w=0; for(const bi of br){ const keep=E.filter((_,i)=>i!==bi); const A=new Map(); nodes.forEach(n=>A.set(n,[])); keep.forEach(e=>{A.get(e[0]).push(e[1]);A.get(e[1]).push(e[0]);});
+      const seen=new Set([ROOT]), q=[ROOT]; while(q.length){const u=q.shift(); for(const v of A.get(u)) if(!seen.has(v)){seen.add(v); q.push(v);} }
+      let m=0; for(const [s,n] of S.nodes) if(!seen.has(s)) m+=n.mw; w=Math.max(w,m); } return {br:br.length, w}; };
+  const before=worstCut(E); const added=[]; const A0=adj();
+  for(let it=0; it<60; it++){ const br=new Set(bridges(nodes,E)); if(!br.size) break;
+    // 2-edge-connected components
+    const A=new Map(); nodes.forEach(n=>A.set(n,[])); E.forEach((e,i)=>{ if(!br.has(i)){A.get(e[0]).push(e[1]);A.get(e[1]).push(e[0]);} });
+    const comp=new Map(); let c=0; for(const n of nodes){ if(comp.has(n)) continue; const q=[n]; comp.set(n,c); while(q.length){const u=q.shift(); for(const v of A.get(u)) if(!comp.has(v)){comp.set(v,c); q.push(v);} } c++; }
+    const deg=new Array(c).fill(0); const TA=Array.from({length:c},()=>[]); for(const i of br){ const a=comp.get(E[i][0]), b=comp.get(E[i][1]); deg[a]++; deg[b]++; TA[a].push(b); TA[b].push(a); }
+    const leaves=[]; for(let k=0;k<c;k++) if(deg[k]===1) leaves.push(k); if(leaves.length===0) break;
+    if(leaves.length===1){ const root=comp.get(ROOT); if(root===leaves[0]) break; leaves.push(root); }
+    const bfs=(s)=>{ const d=new Map([[s,0]]), q=[s]; while(q.length){const u=q.shift(); for(const v of TA[u]) if(!d.has(v)){d.set(v,d.get(u)+1); q.push(v);} } return d; };
+    let pair=null; for(const a of leaves){ const d=bfs(a); for(const b of leaves){ if(b<=a) continue; const dd=d.get(b)??-1; if(!pair||dd>pair[0]) pair=[dd,a,b]; } }
+    const mem=k=>nodes.filter(n=>comp.get(n)===k && n!=="_CC_");
+    let choice=null; const ma=mem(pair[1]), mb=mem(pair[2]);
+    for(const u of ma){ const {d}=dijkstra(A0,u); for(const v of mb){ if(u===v) continue; if(E.some(e=>(e[0]===u&&e[1]===v)||(e[0]===v&&e[1]===u))) continue; const km=d.get(v); if(km!==undefined && (!choice||km<choice[2])) choice=[u,v,km]; } }
+    if(!choice) break; E.push(choice); added.push(choice); }
+  const after=worstCut(E);
+  return {bridgesBefore:before.br, worstBefore:before.w, worstAfter:after.w, added}; }
+
+// ---------------------------------------------------------------- rendering
+const svg=$("map"); const NS="http://www.w3.org/2000/svg";
+function el(tag, attrs, parent){ const x=document.createElementNS(NS,tag); for(const k in attrs) x.setAttribute(k,attrs[k]); (parent||svg).appendChild(x); return x; }
+const short=s=>s.replace("CHATTANOOGA","CHA").replace("KNOXVILLE","KNX").replace("NASHVILLE","NSH").replace("HUNTSVILLE","HSV").replace("MEMPHIS","MEM").replace("ATLANTA","ATL").replace(/\b(\w)(\w+)/g,(m,a,b)=>a+b.toLowerCase()).replace(/^(Cha|Knx|Nsh|Hsv|Mem|Atl)/,m=>m.toUpperCase());
+function draw(){
+  svg.innerHTML=""; const p=P(); const D=S.design;
+  const defs=el("defs",{});
+  defs.innerHTML=`<filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="glowS" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <linearGradient id="qkdG" x1="0" x2="1"><stop offset="0" stop-color="#ffb347"/><stop offset="1" stop-color="#ff6a00"/></linearGradient>
+    <symbol id="ic-power" viewBox="-12 -12 24 24"><path d="M1.5,-9 L-5.5,1.5 L-0.5,1.5 L-2.5,9 L5.5,-2 L0.5,-2 L2.5,-9 Z" fill="#fff"/></symbol>
+    <symbol id="ic-water" viewBox="-12 -12 24 24"><path d="M0,-9 C4,-3.5 6.5,-0.5 6.5,3 A6.5,6.5 0 0 1 -6.5,3 C-6.5,-0.5 -4,-3.5 0,-9Z" fill="#fff"/><path d="M-3,3 A3,3 0 0 0 0,6" stroke="#5b8cff" stroke-width="1.4" fill="none"/></symbol>
+    <symbol id="ic-pipeline" viewBox="-12 -12 24 24"><circle r="6.5" fill="none" stroke="#fff" stroke-width="2.2"/><path d="M0,-6.5V6.5M-6.5,0H6.5M-4.6,-4.6L4.6,4.6M-4.6,4.6L4.6,-4.6" stroke="#fff" stroke-width="1.6"/><circle r="2" fill="#fff"/></symbol>
+    <symbol id="ic-health" viewBox="-12 -12 24 24"><path d="M-2.6,-8H2.6V-2.6H8V2.6H2.6V8H-2.6V2.6H-8V-2.6H-2.6Z" fill="#fff"/></symbol>
+    <symbol id="ic-finance" viewBox="-12 -12 24 24"><path d="M-8.5,-3 L0,-9 L8.5,-3Z" fill="#fff"/><rect x="-7" y="-2" width="2.4" height="8" fill="#fff"/><rect x="-1.2" y="-2" width="2.4" height="8" fill="#fff"/><rect x="4.6" y="-2" width="2.4" height="8" fill="#fff"/><rect x="-8.5" y="6.5" width="17" height="2.2" fill="#fff"/></symbol>
+    <symbol id="ic-hub" viewBox="-12 -12 24 24"><rect x="-7" y="-5" width="14" height="13" rx="1.5" fill="#0b1220"/><path d="M0,-5 V-10 M-3,-10 H3" stroke="#0b1220" stroke-width="1.6"/><circle cx="0" cy="-10.5" r="1.4" fill="#ff6a00"/><rect x="-5" y="-2.5" width="3" height="2.4" fill="#ffd43b"/><rect x="2" y="-2.5" width="3" height="2.4" fill="#ffd43b"/><rect x="-5" y="1.5" width="3" height="2.4" fill="#ffd43b"/><rect x="2" y="1.5" width="3" height="2.4" fill="#ffd43b"/><rect x="-1.4" y="4" width="2.8" height="4" fill="#ffd43b"/></symbol>
+    <symbol id="ic-lock" viewBox="-12 -12 24 24"><path d="M-4.2,-1 V-4 A4.2,4.2 0 0 1 4.2,-4 V-1" stroke="#fff" stroke-width="2.2" fill="none"/><rect x="-6.5" y="-1.5" width="13" height="10" rx="2" fill="#fff"/><circle cx="0" cy="2.8" r="1.6" fill="#ff7a1a"/><rect x="-0.6" y="3" width="1.2" height="3" fill="#ff7a1a"/></symbol>
+    <symbol id="ic-pylon" viewBox="-12 -12 24 24"><path d="M0,-10 L-5,10 M0,-10 L5,10 M-6.5,-5 H6.5 M-8,-1 H8 M-3.6,4 L3.6,4 M-3.6,4 L2.6,-1 M3.6,4 L-2.6,-1 M-6.5,-5 L-6.5,-3 M6.5,-5 L6.5,-3 M-8,-1 L-8,1 M8,-1 L8,1" stroke="#93a6d6" stroke-width="1.4" fill="none" stroke-linecap="round"/></symbol>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#1b2a4d" stroke-width="1"/></pattern>`;
+  el("rect",{x:0,y:0,width:1000,height:700,fill:"url(#grid)",opacity:0.55});
+  if(S.bg){ el("image",{href:S.bg, x:0, y:0, width:1000, height:700, preserveAspectRatio:"xMidYMid meet", opacity:S.bgOp}); }
+  const Y=D? D.Y : new Set(); const prot=D? new Set(D.an.ev.prot):new Set(); const used=D? D.an.ev.used : new Set();
+  const gE=el("g",{}), gQ=el("g",{}), gB=el("g",{}), gP=el("g",{"pointer-events":"none"}), gH=el("g",{}), gN=el("g",{}), gL=el("g",{"pointer-events":"none"}), gT=el("g",{"pointer-events":"none"});
+  const maxT = D? Math.max(1,...D.an.through) : 1;
+  const sectorKey = Object.keys(SECTORS).find(k=>SECTORS[k]===SEC) || "power";
+  if(sectorKey==="power" && S.nodes.size<=120){ const gPy=el("g",{"pointer-events":"none",opacity:0.8}); svg.insertBefore(gPy, gE);
+    S.edges.forEach(e=>{ const a=S.nodes.get(e.a), b=S.nodes.get(e.b); if(!a||!b) return; const L=Math.hypot(b.x-a.x,b.y-a.y); const n=Math.floor(L/55);
+      for(let k=1;k<=n;k++){ const t=k/(n+1); el("use",{href:"#ic-pylon",x:a.x+(b.x-a.x)*t-8,y:a.y+(b.y-a.y)*t-12,width:16,height:16},gPy); } }); }
+  S.edges.forEach((e,i)=>{ const a=S.nodes.get(e.a), b=S.nodes.get(e.b); if(!a||!b) return;
+    const q=Y.has(i), feas=e.km*p.db<=p.loss+1e-9; const tapped=S.tapped===i;
+    if(q){ el("line",{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:"url(#qkdG)","stroke-width":7,filter:"url(#glow)","stroke-linecap":"round"},gQ);
+           el("line",{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:"#fff3d6","stroke-width":1.6,"stroke-dasharray":"3 9",class:"flow",opacity:0.9},gQ);
+           // photons travelling along the QKD link
+           for(let k=0;k<2;k++){ const c=el("circle",{r:2.6,fill:"#fff",filter:"url(#glowS)"},gP); const dur=(1.6+e.km/12).toFixed(2);
+             c.innerHTML=`<animateMotion dur="${dur}s" begin="${(k*dur/2).toFixed(2)}s" repeatCount="indefinite" path="M${a.x},${a.y} L${b.x},${b.y}"/>`; } }
+    else { const w = D? 1+3*Math.sqrt(D.an.through[i]/maxT) : 1.6;
+           el("line",{x1:a.x,y1:a.y,x2:b.x,y2:b.y, stroke: feas? "#5b8cff":"#46598a", "stroke-width": w, "stroke-dasharray": feas?"":"5 5", opacity: feas?0.6:0.55, "stroke-linecap":"round"},gE); }
+    if(tapped){ const mx=(a.x+b.x)/2, my=(a.y+b.y)/2; const caught=q;
+      el("line",{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke: caught?"#ff4d4f":"#adb5bd","stroke-width":caught?9:5,opacity:0.55,filter:"url(#glow)",class:caught?"blink":""},gT);
+      el("circle",{cx:mx,cy:my,r:6,fill:"none",stroke:caught?"#ff4d4f":"#ced4da","stroke-width":2.5,class:"pulse"},gT);
+      el("circle",{cx:mx,cy:my,r:6,fill:"none",stroke:caught?"#ff4d4f":"#ced4da","stroke-width":2.5,class:"pulse",style:"animation-delay:.55s"},gT);
+      const t=el("text",{x:mx,y:my+6,"text-anchor":"middle","font-size":18},gT); t.textContent="🕵️";
+      const tag=el("g",{transform:`translate(${mx+14},${my-28})`},gT);
+      el("rect",{x:0,y:0,rx:5,width:caught?62:84,height:20,fill:caught?"#e03131":"#495057"},tag);
+      const tt=el("text",{x:caught?31:42,y:14,"text-anchor":"middle","font-size":11,"font-weight":800,fill:"#fff","letter-spacing":".06em"},tag); tt.textContent=caught?"ALARM":"UNSEEN TAP";
+      if(caught) tag.setAttribute("class","blink"); }
+    const hit=el("line",{x1:a.x,y1:a.y,x2:b.x,y2:b.y, stroke:"transparent","stroke-width":14, class:"edge"},gH);
+    const t=el("title",{},hit); t.textContent=`${e.a} – ${e.b}: ${fmt(e.km,1)} km${q?" · QKD":""}${feas?"":" · too long for QKD"}${D?` · ${fmt(D.an.through[i])} ${SEC.unit} crosses it`:""}`;
+    hit.addEventListener("click",ev=>{ev.stopPropagation(); onEdge(i);}); });
+  if(D) for(const [u,v] of D.an.cut.added){ const a=S.nodes.get(u), b=S.nodes.get(v); if(a&&b) el("line",{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:"#51cf66","stroke-width":2.4,"stroke-dasharray":"8 5",filter:"url(#glowS)",class:"flow"},gB); }
+  for(const [id,n] of S.nodes){ const isCC=S.cc.includes(id), isT=used.has(id), isP=prot.has(id);
+    const r=Math.max(7.5, Math.min(15, 6+Math.sqrt(n.mw||0)*0.9));
+    const g=el("g",{class:"node", transform:`translate(${n.x},${n.y})`},gN);
+    const selRing = S.sel===id||S.linkStart===id;
+    if(isCC){ el("circle",{r:r+8,fill:"none",stroke:"#ffd43b","stroke-width":2,opacity:0.85,filter:"url(#glowS)"},g);
+              el("rect",{x:-r-3,y:-r-3,width:2*r+6,height:2*r+6,rx:7,fill:"#ffe066",stroke:"#fff3bf","stroke-width":2},g);
+              el("use",{href:"#ic-hub",x:-r-1,y:-r-1,width:2*r+2,height:2*r+2},g); }
+    else if(isT){ el("rect",{x:-r-1,y:-r-1,width:2*r+2,height:2*r+2,rx:5,fill:"#ff7a1a",stroke:"#ffe8cc","stroke-width":1.6,filter:"url(#glowS)"},g);
+              el("use",{href:"#ic-lock",x:-r+1,y:-r+1,width:2*r-2,height:2*r-2},g); }
+    else { el("circle",{r, fill: isP? "#2fb344" : "#4a5a82", stroke: isP? "#d3f9d8":"#8ea0cc","stroke-width": 1.6, filter: isP?"url(#glowS)":""},g);
+           el("use",{href:`#ic-${sectorKey}`,x:-r*0.78,y:-r*0.78,width:r*1.56,height:r*1.56, opacity: isP?1:0.85},g); }
+    if(selRing) el("circle",{r:r+6,fill:"none",stroke:"#ff4d4f","stroke-width":2.5},g);
+    const t=el("title",{},g); t.textContent=`${id}\n${fmt(n.mw,1)} ${SEC.unit}${n.kv&&SEC===SECTORS.power?` · ${n.kv} kV`:""}${isCC?"\n"+SEC.hub:""}${isT?"\ntrusted node":""}${isP&&!isCC?"\nQKD on every hop":""}`;
+    if(isCC||isT||isP||S.nodes.size<=40){ const tx=el("text",{x:n.x, y:n.y-r-(isCC?12:5), "text-anchor":"middle","font-size": isCC?12.5:10,"font-weight":isCC?800:500, fill: isCC?"#ffe066":"#dbe4ff","paint-order":"stroke",stroke:"#0b1220","stroke-width":3.5},gL); tx.textContent=short(id); }
+    g.addEventListener("mousedown",ev=>onNodeDown(ev,id)); }
+}
+
+// ---------------------------------------------------------------- results panel
+function showResults(){
+  const D=S.design; if(!D){ $("kpis").innerHTML=""; $("verdict").innerHTML=""; return; }
+  const a=D.an; const cut=a.cut;
+  const kp=[[`${fmt(a.mwProt)} ${SEC.unit}`, `${SEC.what} with QKD on every hop (${fmt(100*a.mwProt/a.mwAll)}% of ${fmt(a.mwAll)} ${SEC.unit})`],
+            [`${D.Y.size} / ${a.ev.used.size}`, "QKD links / trusted nodes used"],
+            [`${fmt(a.worst)} ${SEC.unit}`, `worst undetected tap (PQC only: ${fmt(a.worstPQC)} ${SEC.unit})`],
+            [`${fmt(100*a.tapShare)}%`, "of random taps land on QKD fiber (by length)"],
+            [`${fmt(a.worstTN)} ${SEC.unit}`, "exposed if the worst trusted node is compromised"],
+            [`${fmt(cut.worstBefore)} → ${fmt(cut.worstAfter)} ${SEC.unit}`, `worst single fiber cut, with ${cut.added.length} new backup route${cut.added.length===1?"":"s"}`]];
+  const pct=(x,y)=>Math.max(0,Math.min(100,100*x/(y||1)));
+  const cards=[
+    {acc:"#2f9e44", k:"shield", donut:pct(a.mwProt,a.mwAll), v:kp[0][0], l:kp[0][1], bars:[]},
+    {acc:"#ff7a1a", k:"link", v:kp[1][0], l:kp[1][1], bars:[[pct(D.Y.size,Math.max(D.Y.size,+$("K").max)),""]]},
+    {acc:"#e03131", k:"spy", v:kp[2][0], l:"worst undetected wiretap", bars:[[100,"PQC only "+fmt(a.worstPQC),true],[pct(a.worst,a.worstPQC),"this design "+fmt(a.worst)]]},
+    {acc:"#5b2a86", k:"radar", v:kp[3][0], l:kp[3][1], bars:[[100*a.tapShare,""]]},
+    {acc:"#f08c00", k:"lock", v:kp[4][0], l:kp[4][1], bars:[[pct(a.worstTN,a.mwAll),""]]},
+    {acc:"#1c7ed6", k:"scissors", v:kp[5][0], l:kp[5][1], bars:[[100,"before "+fmt(cut.worstBefore),true],[pct(cut.worstAfter,Math.max(1,cut.worstBefore)),"after "+fmt(cut.worstAfter)]]}];
+  const donut=(p,c)=>{ const R=15, C=2*Math.PI*R; return `<svg width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="${R}" fill="none" stroke="#e9edf5" stroke-width="6"/><circle cx="20" cy="20" r="${R}" fill="none" stroke="${c}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${C*p/100} ${C}" transform="rotate(-90 20 20)"/><text x="20" y="24" text-anchor="middle" font-size="10" font-weight="700" fill="${c}">${Math.round(p)}%</text></svg>`; };
+  $("kpis").innerHTML=cards.map(c=>`<div class="kpi" style="--acc:${c.acc}"><span class="kicon">${ico(c.k,17)}</span><div class="v">${c.v}</div><div class="l">${c.l}</div>${c.donut!==undefined?`<div class="donut">${donut(c.donut,c.acc)}<span class="mini">of all ${SEC.what}</span></div>`:""}${c.bars.map(([w,t,g])=>`${t?`<div class="mini"><span>${t}</span></div>`:""}<div class="bar ${g?"ghost":""}"><i style="width:0%" data-w="${w}"></i></div>`).join("")}</div>`).join("");
+  requestAnimationFrame(()=>document.querySelectorAll("#kpis .bar i").forEach(x=>x.style.width=x.dataset.w+"%"));
+  const red = a.worstPQC>0 ? 100*(1-a.worst/a.worstPQC) : 0; let html="";
+  html+=`<div class="callout ${red>=30?"good":""}">The worst single wiretap reads <b>${fmt(red)}% less</b> ${SEC.what} undetected than PQC alone.</div>`;
+  if(!a.ev.ccOK) html+=`<div class="callout bad">The two ${SEC.hub}s could not be joined by QKD with these limits. Raise the budget, trusted nodes or hop limit.</div>`;
+  if(100*a.tapShare<20) html+=`<div class="callout">Most fiber still has no quantum alarm: pair QKD with classical fiber monitoring (OTDR / vibration).</div>`;
+  if(D.exactGap!==null) html+=`<div class="callout ${D.exactGap<0.5?"good":""}">${D.exactGap<0.5? "Matches the exact integer-program solution from the notebooks." : `Within ${fmt(D.exactGap,1)}% of the exact integer-program solution.`}</div>`;
+  $("verdict").innerHTML=html; }
+
+// ---------------------------------------------------------------- actions
+function optimize(){
+  if(!S.cc.length) S.cc=autoCC();
+  const p=P(); const M=buildModel(p); if(!M){ $("status").innerHTML="Mark at least one control center first."; return; }
+  const {Y,ms}=solve(M); const an=analyze(M,Y);
+  let exactGap=null; const pr=PRESETS.find(x=>x.key===S.presetKey);
+  if(pr && !S.edited && p.K===pr.exact.K && p.T===pr.exact.T && p.H===pr.exact.H && Math.abs(p.mu-pr.exact.mu)<1e-9 && Math.abs(p.db-pr.exact.db)<1e-9 && p.loss===pr.exact.loss){
+    const idx=new Map(S.edges.map((e,i)=>[ek(e.a,e.b),i])); const YX=new Set(pr.exact.links.map(([a,b])=>idx.get(ek(a,b))).filter(i=>i!==undefined));
+    const ox=objective(M,YX,p.T).obj, oy=objective(M,Y,p.T).obj; exactGap=Math.max(0,100*(ox-oy)/Math.abs(ox||1)); }
+  S.design={Y,an,M,exactGap}; S.tapped=null;
+  $("solveNote").textContent=`Solved in ${fmt(ms)} ms · ${M.feasible.size} of ${S.edges.length} links short enough for QKD · ${M.paths.size} substations reachable by a QKD chain.`;
+  $("status").innerHTML=`Optimized: QKD on <b>${Y.size}</b> links. Click a link to tap it.`;
+  $("attackOut").innerHTML=IDLE_ATTACK;
+  draw(); showResults(); }
+function onEdge(i){
+  if(S.mode==="del"){ S.edges.splice(i,1); S.edited=true; S.design=null; draw(); showResults(); return; }
+  if(S.mode==="tap" || S.mode==="move"){ tap(i); return; }
+  const e=S.edges[i]; S.sel="edge:"+i; showEdit(); }
+const IDLE_ATTACK=`<div class="idle"><svg width="84" height="54" viewBox="0 0 84 54"><path d="M2 40 Q20 30 42 40 T82 40" stroke="#ff7a1a" stroke-width="4" fill="none" stroke-linecap="round"/><circle r="3" fill="#fff" stroke="#ff7a1a"><animateMotion dur="2s" repeatCount="indefinite" path="M2 40 Q20 30 42 40 T82 40"/></circle><g transform="translate(30,2)" fill="#1d2330"><path d="M2 12h20"/><rect x="2" y="10" width="20" height="3" rx="1.5"/><path d="M6 10 L8 3 H16 L18 10Z"/><circle cx="7" cy="18" r="4" fill="none" stroke="#1d2330" stroke-width="2"/><circle cx="17" cy="18" r="4" fill="none" stroke="#1d2330" stroke-width="2"/></g><path d="M42 26 V36" stroke="#e03131" stroke-width="2" stroke-dasharray="2 2"/></svg><div class="note">Click any link on the map to tap it, or press <b>Random attack</b>. QKD links raise an alarm; PQC-only links don't.</div></div>`;
+function bb84Strip(caught){
+  // 12 rounds like the qBraid circuits: bases +/x, sifted rounds kept, Eve's wrong-basis guesses cause errors
+  let h=`<div class="bb84">`; let err=0, kept=0; const R=12; let seed=(S.tapped||1)*97+3; const rnd=()=>{ seed=(seed*16807)%2147483647; return seed/2147483647; };
+  for(let k=0;k<R;k++){ const ab=rnd()<.5, bb=rnd()<.5, bit=rnd()<.5?1:0, keep=ab===bb; const eveWrong=caught && rnd()<.5; const flip=keep && eveWrong && rnd()<.5;
+    if(keep){ kept++; if(flip) err++; }
+    h+=`<div class="ph ${!keep?"drop":flip?"err":"ok"} ${caught?"eve":""}" title="${keep?"sifted round":"bases differ: discarded"}">${ab?"×":"+"}<small>${keep?(flip?1-bit:bit):"–"}</small></div>`; }
+  return h+`</div><div class="mini"><span>Alice's basis (+ or ×) and the bit Bob read · grey = discarded, red = error</span></div>`; }
+function meter(q, label){ const pos=Math.min(100,q/0.5*100); return `<div class="mini"><span>QBER ${label}</span><span><b>${(q*100).toFixed(1)}%</b></span></div><div class="meter"><span class="thr" style="left:${0.11/0.5*100}%"></span><span class="needle" style="left:0%" data-l="${pos}"></span></div><div class="mini"><span>0%</span><span>11% abort line</span><span>50%</span></div>`; }
+function tap(i){
+  S.tapped=i; const e=S.edges[i]; const D=S.design; let msg;
+  if(!D){ msg=`Tapped ${e.a} – ${e.b}. Run the optimizer first to score it.`; }
+  else { const q=D.Y.has(i); const mw=D.an.through[i]; const subs=[...D.an.R].filter(([s,r])=>r.E.includes(i)).map(([s])=>s);
+    const meas = EVIDENCE.filter(r=>/tap every round/.test(r.attack)); const pick = meas.length? meas[Math.floor(Math.random()*meas.length)] : null;
+    const quiet = EVIDENCE.find(r=>/Forte/.test(r.device)) || {result:"0.004"};
+    msg = q ? `<div class="callout good"><span class="alarm">ALARM</span> <b>Caught.</b> ${e.a} – ${e.b} has QKD: the tap disturbs the photons, the error rate jumps and the alarm fires. ${fmt(mw)} ${SEC.unit} of ${SEC.traffic} stays protected; the link falls back to PQC keys until it is cleared.</div>`
+              + bb84Strip(true) + meter(pick? parseFloat(pick.result) : 0.25, pick? `measured with this attack on ${pick.device} via qBraid` : "expected under a full tap")
+              + `<p class="note">Quiet link baseline: ${(parseFloat(quiet.result)*100).toFixed(1)}% on IonQ Forte 1 (Step 1).</p>`
+            : `<div class="callout bad"><span class="silent">UNSEEN</span> <b>Not caught by QKD.</b> ${e.a} – ${e.b} is PQC only, so ${fmt(mw)} ${SEC.unit} of ${SEC.traffic} (${subs.length} ${SEC.site}${subs.length===1?"":"s"}) crosses a tap with no quantum alarm. PQC keeps it unreadable today; only classical fiber monitoring can flag the tap.</div>`
+              + `<p class="note">Fix options: add this link to the QKD budget, or put classical fiber monitoring (OTDR / vibration sensing) on it. In 3d, fusing that monitor with the QBER alarm caught 84% of small taps.</p>`;
+    msg += `<p class="note">${fmt(e.km,1)} km link${e.km*D.M.p.db>D.M.p.loss?" (too long for QKD at these settings)":""}.</p>`; }
+  $("attackOut").innerHTML=msg; draw();
+  requestAnimationFrame(()=>setTimeout(()=>document.querySelectorAll("#attackOut .needle").forEach(n=>n.style.left=n.dataset.l+"%"),30)); }
+function randomTap(){ const tot=S.edges.reduce((s,e)=>s+e.km,0); let r=Math.random()*tot; for(let i=0;i<S.edges.length;i++){ r-=S.edges[i].km; if(r<=0){ tap(i); return; } } }
+function loadNet(obj, key){
+  S.nodes=new Map(); obj.nodes.forEach((n,k)=>S.nodes.set(String(n.id),{id:String(n.id), mw:+n.mw||0, kv:+n.kv||0, x:n.x??null, y:n.y??null}));
+  S.edges=obj.edges.filter(e=>S.nodes.has(String(e.a))&&S.nodes.has(String(e.b))&&e.a!==e.b).map(e=>({a:String(e.a), b:String(e.b), km:+e.km||1}));
+  S.cc=(obj.cc||[]).map(String).filter(c=>S.nodes.has(c)).slice(0,2); S.design=null; S.tapped=null; S.presetKey=key||null; S.edited=false;
+  if([...S.nodes.values()].some(n=>n.x===null||n.y===null)) layout(); else fit();
+  if(!S.cc.length) S.cc=autoCC(); draw(); showResults(); }
+function fit(){ const xs=[...S.nodes.values()].map(n=>n.x), ys=[...S.nodes.values()].map(n=>n.y); if(!xs.length) return;
+  const x0=Math.min(...xs), x1=Math.max(...xs), y0=Math.min(...ys), y1=Math.max(...ys); if(S.bg) return;
+  const sx=920/((x1-x0)||1), sy=620/((y1-y0)||1), s=Math.min(sx,sy); for(const n of S.nodes.values()){ n.x=40+(n.x-x0)*s; n.y=40+(n.y-y0)*s; } }
+function layout(){ const N=[...S.nodes.values()]; N.forEach((n,i)=>{ if(n.x===null){ n.x=500+300*Math.cos(2*Math.PI*i/N.length); n.y=350+250*Math.sin(2*Math.PI*i/N.length);} });
+  for(let it=0;it<400;it++){ const F=new Map(N.map(n=>[n.id,[0,0]]));
+    for(let i=0;i<N.length;i++) for(let j=i+1;j<N.length;j++){ const a=N[i],b=N[j]; let dx=a.x-b.x, dy=a.y-b.y; const d2=dx*dx+dy*dy+0.01, f=3000/d2; F.get(a.id)[0]+=dx*f; F.get(a.id)[1]+=dy*f; F.get(b.id)[0]-=dx*f; F.get(b.id)[1]-=dy*f; }
+    for(const e of S.edges){ const a=S.nodes.get(e.a), b=S.nodes.get(e.b); const dx=b.x-a.x, dy=b.y-a.y; const d=Math.sqrt(dx*dx+dy*dy)+0.01, f=(d-60)*0.02; F.get(a.id)[0]+=dx/d*f*d; F.get(a.id)[1]+=dy/d*f*d; F.get(b.id)[0]-=dx/d*f*d; F.get(b.id)[1]-=dy/d*f*d; }
+    const step=Math.max(0.02, 1-it/400); for(const n of N){ const [fx,fy]=F.get(n.id); const m=Math.sqrt(fx*fx+fy*fy)||1; n.x+=fx/m*Math.min(m,10)*step; n.y+=fy/m*Math.min(m,10)*step; } }
+  fit(); }
+
+// ---------------------------------------------------------------- editing
+function svgPt(ev){ const pt=svg.createSVGPoint(); pt.x=ev.clientX; pt.y=ev.clientY; return pt.matrixTransform(svg.getScreenCTM().inverse()); }
+let drag=null;
+function onNodeDown(ev,id){ ev.stopPropagation(); const m=S.mode;
+  if(m==="move"){ drag=id; return; }
+  if(m==="del"){ S.nodes.delete(id); S.edges=S.edges.filter(e=>e.a!==id&&e.b!==id); S.cc=S.cc.filter(c=>c!==id); edited(); return; }
+  if(m==="cc"){ if(S.cc.includes(id)) S.cc=S.cc.filter(c=>c!==id); else { S.cc.push(id); if(S.cc.length>2) S.cc.shift(); } edited(); return; }
+  if(m==="link"){ if(!S.linkStart){ S.linkStart=id; draw(); return; } if(S.linkStart!==id){ const a=S.nodes.get(S.linkStart), b=S.nodes.get(id); const km=Math.round(Math.hypot(a.x-b.x,a.y-b.y)/100*(+$("scale").value)*10)/10; S.edges.push({a:S.linkStart,b:id,km:Math.max(0.1,km)}); } S.linkStart=null; edited(); return; }
+  S.sel=id; showEdit(); draw(); }
+svg.addEventListener("mousemove",ev=>{ if(!drag) return; const p=svgPt(ev); const n=S.nodes.get(drag); n.x=p.x; n.y=p.y; draw(); });
+window.addEventListener("mouseup",()=>{ drag=null; });
+svg.addEventListener("click",ev=>{ if(S.mode!=="node") return; const p=svgPt(ev); let k=S.nodes.size+1; while(S.nodes.has("S"+k)) k++; const id="S"+k; S.nodes.set(id,{id,mw:20,kv:115,x:p.x,y:p.y}); S.sel=id; edited(); showEdit(); });
+function edited(){ S.edited=true; S.design=null; S.tapped=null; draw(); showResults(); }
+function showEdit(){ const box=$("editBox"); if(!S.sel){ box.innerHTML=""; return; }
+  if(S.sel.startsWith("edge:")){ const i=+S.sel.slice(5), e=S.edges[i]; if(!e){box.innerHTML="";return;} box.innerHTML=`<b>Link ${e.a} – ${e.b}</b><br>km <input type="number" step="0.1" id="eKm" value="${e.km}">`; $("eKm").onchange=ev=>{ e.km=+ev.target.value; edited(); }; switchTab("build"); return; }
+  const n=S.nodes.get(S.sel); if(!n){box.innerHTML="";return;}
+  box.innerHTML=`<b>${SEC.site}</b><br>Name <input type="text" id="nId" value="${n.id}"><br>Value (${SEC.unit}) <input type="number" id="nMw" value="${n.mw}"><br>Voltage (kV) <input type="number" id="nKv" value="${n.kv}">`;
+  $("nMw").onchange=ev=>{ n.mw=+ev.target.value; edited(); }; $("nKv").onchange=ev=>{ n.kv=+ev.target.value; edited(); };
+  $("nId").onchange=ev=>{ const v=ev.target.value.trim(); if(!v||S.nodes.has(v)) return; S.nodes.delete(n.id); S.edges.forEach(e=>{ if(e.a===n.id) e.a=v; if(e.b===n.id) e.b=v; }); S.cc=S.cc.map(c=>c===n.id?v:c); n.id=v; S.nodes.set(v,n); S.sel=v; edited(); };
+  switchTab("build"); }
+
+// ---------------------------------------------------------------- UI wiring
+function switchTab(t){ document.querySelectorAll(".tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tab===t)); ["preset","build","json"].forEach(x=>$("tab-"+x).classList.toggle("hide",x!==t)); }
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
+document.querySelectorAll("#toolbar [data-mode]").forEach(b=>b.onclick=()=>{ S.mode=b.dataset.mode; S.linkStart=null; document.querySelectorAll("#toolbar [data-mode]").forEach(x=>x.classList.toggle("on",x===b));
+  $("status").innerHTML={tap:"Click a link to tap it.",move:"Drag substations to move them.",node:"Click empty space to add a substation.",link:"Click two substations to join them.",cc:"Click a substation to make it a control center (max 2).",del:"Click a substation or link to delete it."}[S.mode]; draw(); });
+$("randTap").onclick=randomTap;
+const lab={K:v=>v, T:v=>v, H:v=>v+" hop"+(v>1?"s":""), db:v=>(v/100).toFixed(2)+" dB/km", loss:v=>v+" dB", mu:v=>(v/100).toFixed(2)};
+for(const k in lab){ const f=()=>{ $(k+"V").textContent=lab[k](+$(k).value); }; $(k).addEventListener("input",()=>{ f(); }); $(k).addEventListener("change",()=>{ if(S.design) optimize(); }); f(); }
+$("run").onclick=optimize;
+PRESETS.forEach(p=>{ const o=document.createElement("option"); o.value=p.key; o.textContent=`${p.title} · ${p.nodes.length} substations`; $("presetSel").appendChild(o); });
+$("presetSel").onchange=()=>{ const p=PRESETS.find(x=>x.key===$("presetSel").value); S.bg=null; loadNet(p,p.key); $("presetNote").textContent=`${p.nodes.length} sites, ${p.edges.length} links. ${SEC.hub}s: ${p.cc.join(", ")}.${SEC===SECTORS.power?"":" Grid values relabeled as "+SEC.unit+" for illustration."}`; optimize(); };
+$("newBlank").onclick=()=>{ S.nodes=new Map(); S.edges=[]; S.cc=[]; S.design=null; S.presetKey=null; S.edited=true; draw(); showResults(); document.querySelector('#toolbar [data-mode="node"]').click(); };
+$("imgFile").onchange=ev=>{ const f=ev.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ S.bg=r.result; S.nodes=new Map(); S.edges=[]; S.cc=[]; S.design=null; S.presetKey=null; S.edited=true; draw(); showResults(); document.querySelector('#toolbar [data-mode="node"]').click(); $("status").innerHTML="Image loaded. Click on each substation in the picture, then use <b>+ Link</b> to trace the lines."; }; r.readAsDataURL(f); };
+$("imgOp").oninput=ev=>{ S.bgOp=ev.target.value/100; $("opV").textContent=ev.target.value+"%"; draw(); };
+$("scale").oninput=ev=>{ $("scaleV").textContent=ev.target.value+" km / 100 px"; };
+$("jsonLoad").onclick=()=>{ try{ const o=JSON.parse($("jsonIn").value); loadNet(o,null); S.edited=true; optimize(); } catch(e){ $("status").innerHTML="Could not read that JSON: "+e.message; } };
+$("jsonExport").onclick=()=>{ const o={nodes:[...S.nodes.values()].map(n=>({id:n.id,mw:n.mw,kv:n.kv,x:Math.round(n.x),y:Math.round(n.y)})), edges:S.edges, cc:S.cc}; $("jsonIn").value=JSON.stringify(o); try{navigator.clipboard.writeText($("jsonIn").value);}catch(e){} };
+$("exportDesign").onclick=()=>{ const D=S.design; if(!D){ $("status").innerHTML="Optimize first."; return; }
+  const out={network:S.presetKey||"custom", params:D.M.p, control_centers:S.cc,
+    qkd_links:[...D.Y].map(i=>({a:S.edges[i].a,b:S.edges[i].b,km:S.edges[i].km,loss_db:+(S.edges[i].km*D.M.p.db).toFixed(2), traffic_mw:+D.an.through[i].toFixed(1)})),
+    trusted_nodes:[...D.an.ev.used], protected:D.an.ev.prot, backup_routes:D.an.cut.added.map(([a,b,km])=>({a,b,km:+km.toFixed(1)})),
+    nodes:[...S.nodes.values()].map(n=>({id:n.id,mw:n.mw,kv:n.kv})), edges:S.edges};
+  const blob=new Blob([JSON.stringify(out,null,1)],{type:"application/json"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="grid_design.json"; a.click(); };
+// evidence table
+$("evidence").innerHTML="<tr><th>Device</th><th>Attack</th><th>QBER</th><th>Job</th></tr>"+EVIDENCE.map(r=>`<tr><td>${/Forte|IonQ/.test(r.device)?ico("atom",13):ico("chip",13)} ${r.device}</td><td>${r.attack}</td><td>${r.result}</td><td><code title="${r.job}">${r.job.includes('qjob-')? '…'+r.job.slice(-10) : r.job}</code></td></tr>`).join("");
+// ---------------------------------------------------------------- decorations
+const H2I={"Sector":"map","Network":"building","Assumptions":"sliders","Results":"chart","Attack test":"spy","Run on qBraid":"atom"};
+document.querySelectorAll(".panel h2").forEach(h=>{ const k=Object.keys(H2I).find(t=>h.textContent.includes(t)); if(k) h.innerHTML=ico(H2I[k],16)+h.innerHTML; });
+$("run").innerHTML=ico("sparkle",18)+"Optimize network";
+$("exportDesign").innerHTML=ico("download",15)+" Download design JSON";
+$("randTap").innerHTML="🕵️ Random attack";
+// sector tiles
+const tiles=document.createElement("div"); tiles.className="tiles";
+Object.entries(SECTORS).forEach(([k,v])=>{ const t=document.createElement("div"); t.className="tile"; t.dataset.s=k; t.innerHTML=ico(k,24)+`<span>${{power:"Power",water:"Water",pipeline:"Pipeline",health:"Hospital",finance:"Bank"}[k]}</span>`;
+  t.onclick=()=>{ $("sectorSel").value=k; $("sectorSel").dispatchEvent(new Event("change")); }; tiles.appendChild(t); });
+$("sectorSel").before(tiles); $("sectorSel").style.display="none";
+const markTiles=()=>document.querySelectorAll(".tile").forEach(t=>t.classList.toggle("on",t.dataset.s===$("sectorSel").value));
+$("sectorSel").addEventListener("change",markTiles); markTiles();
+// slider icons + mini visuals
+const SI={K:"link",T:"lock",H:"chain",db:"fiber",loss:"gauge",mu:"eye"};
+for(const k in SI){ const lab=$(k).previousElementSibling; const txt=lab.firstChild; const sp=document.createElement("span"); sp.className="lab"; sp.innerHTML=ico(SI[k],15)+txt.textContent; lab.replaceChild(sp,txt);
+  const v=document.createElement("div"); v.className="viz"; v.id="viz-"+k; $(k).after(v); }
+function viz(){ const p=P();
+  $("viz-K").innerHTML=Array.from({length:+$("K").max},(_,i)=>`<i class="pip ${i<p.K?"on":""}"></i>`).join("");
+  $("viz-T").innerHTML=Array.from({length:+$("T").max},(_,i)=>`<span class="lockpip ${i<p.T?"":"off"}">${ico("lock",13)}</span>`).join("");
+  $("viz-H").innerHTML=`<i class="hopdot cc"></i>`+Array.from({length:p.H},(_,i)=>`<i class="hopline"></i><i class="hopdot"></i>`).join("")+`<span class="mini" style="margin-left:6px">${Math.max(0,p.H-1)} relay${p.H-1===1?"":"s"} max on a chain</span>`;
+  const reach=p.loss/p.db; $("viz-db").innerHTML=`<i class="beam" style="background:linear-gradient(90deg,#ffb347 0%,#ff6a00 ${Math.min(100,reach/60*100)}%,#e9edf5 ${Math.min(100,reach/60*100)}%)"></i><span class="mini" style="margin-left:6px">QKD reach ≈ ${Math.round(reach)} km</span>`;
+  $("viz-loss").innerHTML=`<i class="beam" style="background:linear-gradient(90deg,#2fb344 0%,#2fb344 ${p.loss/20*100}%,#e9edf5 ${p.loss/20*100}%)"></i><span class="mini" style="margin-left:6px">${(100*Math.pow(10,-p.loss/10)).toFixed(1)}% of photons survive</span>`;
+  $("viz-mu").innerHTML=`<span class="mini">🔒 secrecy</span><span class="scale" style="margin:0 6px"><i style="width:${100/(1+p.mu)}%;background:#2fb344"></i><i style="width:${100*p.mu/(1+p.mu)}%;background:#5b2a86"></i></span><span class="mini">👁 detection</span>`; }
+["K","T","H","db","loss","mu"].forEach(k=>$(k).addEventListener("input",viz)); viz();
+// qBraid device strip
+const dv=document.createElement("div"); dv.className="devrow";
+dv.innerHTML=[["atom","IonQ Forte","real QPU"],["chip","Quantinuum H2","emulator"],["gpu","GPU sim","whole design"],["sparkle","qBraid AI","image → grid"]].map(([k,a,b])=>`<div class="dev">${ico(k,22)}<b>${a}</b><br>${b}</div>`).join("");
+$("exportDesign").parentElement.before(dv);
+$("attackOut").innerHTML=IDLE_ATTACK;
+// sector switcher
+Object.entries(SECTORS).forEach(([k,v])=>{ const o=document.createElement("option"); o.value=k; o.textContent=v.name; $("sectorSel").appendChild(o); });
+function applySector(setParams=true){ SEC=SECTORS[$("sectorSel").value];
+  if(setParams){ for(const k in SEC.p){ $(k).value=SEC.p[k]; $(k+"V").textContent=lab[k](SEC.p[k]); } if(typeof viz==="function") viz(); }
+  const names={K:"QKD links",T:"Trusted nodes",H:"Longest chain",db:"Fiber loss",mu:"Tap-detection weight"};
+  $("sectorNote").innerHTML=SEC.note+`<details open style="margin-top:6px"><summary>Starting assumptions for this sector</summary><table>${Object.keys(names).map(k=>`<tr><td><b>${names[k]}</b></td><td>${SEC.why[k]}</td></tr>`).join("")}</table><p class="note">Illustrative starting points, not measured values (except EPB's fiber loss). The QKD hardware limit stays at 10 dB. Move the sliders to test your own.</p></details>`;
+  $("addNodeBtn").textContent="+ "+SEC.site.split(" ")[0].replace(/^./,c=>c.toUpperCase()); $("ccBtn").textContent=SEC.hub.replace(/^./,c=>c.toUpperCase()); $("lgCC").textContent=SEC.hub; $("lgIcon").setAttribute("href","#ic-"+$("sectorSel").value);
+  if(setParams && S.nodes.size) optimize(); else { draw(); showResults(); }
+  if(S.tapped!==null && S.design) tap(S.tapped); }
+$("sectorSel").onchange=applySector;
+// ---------------------------------------------------------------- qBraid AI Gateway: grid image -> network
+const GW="https://api-v2.qbraid.com/api/v1/ai"; let MODELS=[];
+$("qbConnect").onclick=async()=>{ const key=$("qbKey").value.trim(); if(!key){ $("qbMsg").textContent="Paste your qBraid API key (account.qbraid.com → API keys)."; return; }
+  $("qbMsg").textContent="Asking qBraid for models…";
+  try{ const r=await fetch(GW+"/models",{headers:{"X-API-Key":key}}); if(!r.ok) throw new Error("HTTP "+r.status); const j=await r.json();
+    MODELS=(j.data||[]).map(m=>({id:m.id, caps:JSON.stringify(m._qbraid?.capabilities||m.capabilities||""), eps:JSON.stringify(m._qbraid?.supportedEndpoints||"")}));
+    const vis=MODELS.filter(m=>/image|vision/i.test(m.caps)); const list=(vis.length?vis:MODELS);
+    $("qbModel").innerHTML=list.map(m=>`<option value="${m.id}">${m.id}</option>`).join("");
+    $("qbMsg").textContent=`${list.length} ${vis.length?"vision-capable ":""}models available. Upload an image above, then press Read.`;
+  }catch(e){ $("qbMsg").innerHTML=`Could not reach qBraid from this page (${e.message}). Browsers can block this call; use <code>3i_grid_image_to_design.ipynb</code> in qBraid Lab instead, then paste its JSON in the Import tab.`; } };
+$("qbRead").onclick=async()=>{ const key=$("qbKey").value.trim(), model=$("qbModel").value; if(!S.bg){ $("qbMsg").textContent="Upload a grid image first (trace an image, above)."; return; } if(!key||!model){ $("qbMsg").textContent="Load models first."; return; }
+  const m=S.bg.match(/^data:(image\/[a-z+]+);base64,(.*)$/); if(!m){ $("qbMsg").textContent="Image format not supported."; return; }
+  const img=new Image(); img.src=S.bg; await img.decode(); const W=img.naturalWidth, Hh=img.naturalHeight;
+  $("qbMsg").textContent="qBraid AI is reading the image…";
+  const prompt=$("aiPrompt").value+`\nThe image is ${W} x ${Hh} pixels.`;
+  try{ let text;
+    const meta=MODELS.find(x=>x.id===model)||{eps:""};
+    if(/messages/.test(meta.eps) || /claude/i.test(model)){
+      const r=await fetch(GW+"/v1/messages",{method:"POST",headers:{"X-API-Key":key,"x-api-key":key,"content-type":"application/json","anthropic-version":"2023-06-01"},
+        body:JSON.stringify({model,max_tokens:8000,messages:[{role:"user",content:[{type:"image",source:{type:"base64",media_type:m[1],data:m[2]}},{type:"text",text:prompt}]}]})});
+      if(!r.ok) throw new Error("HTTP "+r.status+" "+(await r.text()).slice(0,160)); const j=await r.json(); text=(j.content||[]).map(c=>c.text||"").join("");
+    } else {
+      const r=await fetch(GW+"/chat/completions",{method:"POST",headers:{"X-API-Key":key,"content-type":"application/json"},
+        body:JSON.stringify({model,messages:[{role:"user",content:[{type:"image_url",image_url:{url:S.bg}},{type:"text",text:prompt}]}]})});
+      if(!r.ok) throw new Error("HTTP "+r.status+" "+(await r.text()).slice(0,160)); const j=await r.json(); text=j.choices?.[0]?.message?.content||""; }
+    const js=JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}")+1));
+    // map image pixels onto the 1000 x 700 map (image is drawn centered, aspect kept)
+    const sc=Math.min(1000/W,700/Hh), ox=(1000-W*sc)/2, oy=(700-Hh*sc)/2;
+    js.nodes.forEach(n=>{ if(n.x!=null) n.x=ox+n.x*sc; if(n.y!=null) n.y=oy+n.y*sc; });
+    const bg=S.bg; loadNet(js,null); S.bg=bg; S.edited=true; draw();
+    $("qbMsg").textContent=`qBraid AI found ${S.nodes.size} sites and ${S.edges.length} links. Fix anything it missed with the toolbar, then Optimize.`;
+    optimize();
+  }catch(e){ $("qbMsg").innerHTML=`qBraid AI call failed (${e.message}). Use <code>3i_grid_image_to_design.ipynb</code> in qBraid Lab instead.`; } };
+// start
+$("presetSel").value=PRESETS[0]?.key; $("presetSel").onchange(); applySector(false);
+</script>
+</body>
+</html>
